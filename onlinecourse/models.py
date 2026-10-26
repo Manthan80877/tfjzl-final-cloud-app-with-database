@@ -106,8 +106,8 @@ class Question(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     
     # The actual text of the question
-    question_text = models.CharField(max_length=250)
-    
+    question_text = models.TextField()
+
     # The point value of this question, defaults to 1 points
     grade = models.IntegerField(default=1) 
 
