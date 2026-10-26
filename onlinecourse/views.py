@@ -140,6 +140,7 @@ def submit(request, course_id):
 # View to calculate and display the user's final exam score
 def show_exam_result(request, course_id, submission_id):
     course = get_object_or_404(Course, pk=course_id)
+
     submission = get_object_or_404(
         Submission,
         pk=submission_id,
@@ -151,28 +152,43 @@ def show_exam_result(request, course_id, submission_id):
         submission.choices.values_list('id', flat=True)
     )
 
-    # Calculate the marks obtained
+    # Calculate the marks obtained and the possible score
     grade = 0
+    possible_score = 0
+
     for question in course.question_set.all():
+        possible_score += question.grade
+
         if question.is_get_score(selected_ids):
             grade += question.grade
 
-    # Calculate the total marks available
-    total_marks = sum(
-        question.grade for question in course.question_set.all()
-    )
-
     # Calculate the percentage
     percentage = (
-        (grade / total_marks) * 100
-        if total_marks > 0 else 0
+        (grade / possible_score) * 100
+        if possible_score > 0 else 0
     )
 
+    # Prepare question results with their correct answers
+    exam_results = []
+
+    for question in course.question_set.all():
+        correct_answers = question.choice_set.filter(is_correct=True)
+
+        exam_results.append({
+            'question': question,
+            'correct_answers': correct_answers,
+        })
+
+    # Pass all required values to the result template
     context = {
         'course': course,
         'submission': submission,
         'grade': grade,
-        'total_marks': total_marks,
+        'total_marks': possible_score,
+        'possible_score': possible_score,
+        'possible': possible_score,
+        'selected_ids': selected_ids,
+        'exam_results': exam_results,
         'percentage': round(percentage, 2),
         'passed': percentage >= 80,
     }

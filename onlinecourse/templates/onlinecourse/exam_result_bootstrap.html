@@ -46,6 +46,34 @@
         </div>
     </div>
 
+    <!-- Exam results section showing each question and its correct answers -->
+    <div class="card mt-4 mb-4">
+        <div class="card-header">
+            <h4>Exam Results</h4>
+        </div>
+
+        <div class="card-body">
+            {% for result in exam_results %}
+                <div class="mb-4">
+                    <h5>{{ forloop.counter }}. {{ result.question.question_text }}</h5>
+
+                    <p class="text-success font-weight-bold">
+                        Correct Answer(s):
+                    </p>
+
+                    <ul>
+                        {% for answer in result.correct_answers %}
+                            <li>{{ answer.choice_text }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <hr>
+            {% empty %}
+                <p>No exam questions are available.</p>
+            {% endfor %}
+        </div>
+    </div>
+
     <a class="btn btn-primary mt-3"
        href="{% url 'onlinecourse:course_details' course.id %}">
         Back to Course
