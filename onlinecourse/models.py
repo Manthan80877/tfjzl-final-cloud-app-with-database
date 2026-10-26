@@ -77,7 +77,7 @@ class Lesson(models.Model):
 
 
 # Enrollment model
-# <HINT> Once a user enrolled a class, an enrollment entry should be created between the user and course
+# Once a user enrolled a class, an enrollment entry should be created between the user and course
 # And we could use the enrollment to track information such as exam submissions
 class Enrollment(models.Model):
     AUDIT = 'audit'
@@ -95,40 +95,61 @@ class Enrollment(models.Model):
     rating = models.FloatField(default=5.0)
 
 
-# <HINT> Create a Question Model with:
-    # Used to persist question content for a course
-    # Has a One-To-Many (or Many-To-Many if you want to reuse questions) relationship with course
-    # Has a grade point for each question
-    # Has question content
-    # Other fields and methods you would like to design
-#class Question(models.Model):
-    # Foreign key to lesson
-    # question text
-    # question grade/mark
+# ==============================================================================
+# NEW MODELS FOR EXAM FEATURE (TASK 1)
+# ==============================================================================
 
-    # <HINT> A sample model method to calculate if learner get the score of the question
-    #def is_get_score(self, selected_ids):
-    #    all_answers = self.choice_set.filter(is_correct=True).count()
-    #    selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
-    #    if all_answers == selected_correct:
-    #        return True
-    #    else:
-    #        return False
+# Question Model: Stores questions related to a specific course
+class Question(models.Model):
+    # Many-to-One relationship: Many questions belong to one course.
+    # on_delete=models.CASCADE means if the course is deleted, its questions are deleted too.
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    
+    # The actual text of the question
+    question_text = models.CharField(max_length=250)
+    
+    # The point value of this question, defaults to 5 points
+    grade = models.IntegerField(default=5) 
+
+    # Method to calculate if the learner got the correct score for this question
+    def is_get_score(self, selected_ids):
+        # Counts how many choices for this question are actually correct
+        all_answers = self.choice_set.filter(is_correct=True).count()
+        # Counts how many of the correct choices the user actually selected
+        selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
+        
+        # If the user selected all the correct choices, return True (they get the points)
+        if all_answers == selected_correct:
+            return True
+        else:
+            return False
+
+    # Displays the question text in the Django Admin site
+    def __str__(self):
+        return self.question_text
 
 
-#  <HINT> Create a Choice Model with:
-    # Used to persist choice content for a question
-    # One-To-Many (or Many-To-Many if you want to reuse choices) relationship with Question
-    # Choice content
-    # Indicate if this choice of the question is a correct one or not
-    # Other fields and methods you would like to design
-# class Choice(models.Model):
+# Choice Model: Stores the multiple-choice options for a given question
+class Choice(models.Model):
+    # Many-to-One relationship: Many choices belong to one specific Question.
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    
+    # The text of the choice (e.g., "A. True", "B. False")
+    choice_text = models.CharField(max_length=250)
+    
+    # Boolean flag to indicate if this choice is the correct answer
+    is_correct = models.BooleanField(default=False)
 
-# <HINT> The submission model
-# One enrollment could have multiple submission
-# One submission could have multiple choices
-# One choice could belong to multiple submissions
-#class Submission(models.Model):
-#    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
-#    choices = models.ManyToManyField(Choice)
-#    Other fields and methods you would like to design
+    # Displays the choice text in the Django Admin site
+    def __str__(self):
+        return self.choice_text
+
+
+# Submission Model: Tracks an individual learner's exam attempt
+class Submission(models.Model):
+    # Links the exam submission to a specific user's enrollment in a course
+    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
+    
+    # Many-to-Many relationship: A submission can have multiple selected choices,
+    # and a single choice can be selected across multiple learners' submissions.
+    choices = models.ManyToManyField(Choice)
