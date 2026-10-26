@@ -108,8 +108,8 @@ class Question(models.Model):
     # The actual text of the question
     question_text = models.CharField(max_length=250)
     
-    # The point value of this question, defaults to 5 points
-    grade = models.IntegerField(default=5) 
+    # The point value of this question, defaults to 1 points
+    grade = models.IntegerField(default=1) 
 
     # Method to calculate if the learner got the correct score for this question
     def is_get_score(self, selected_ids):
@@ -135,7 +135,7 @@ class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     
     # The text of the choice (e.g., "A. True", "B. False")
-    choice_text = models.CharField(max_length=250)
+    choice_text = models.CharField(max_length=100)
     
     # Boolean flag to indicate if this choice is the correct answer
     is_correct = models.BooleanField(default=False)
@@ -147,9 +147,8 @@ class Choice(models.Model):
 
 # Submission Model: Tracks an individual learner's exam attempt
 class Submission(models.Model):
-    # Links the exam submission to a specific user's enrollment in a course
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
-    
-    # Many-to-Many relationship: A submission can have multiple selected choices,
-    # and a single choice can be selected across multiple learners' submissions.
     choices = models.ManyToManyField(Choice)
+
+    def __str__(self):
+        return f"Submission {self.id}"
